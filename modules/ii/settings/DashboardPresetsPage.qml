@@ -40,6 +40,38 @@ Item {
         return scored.map(e => e.item);
     }
 
+    function rankOnline(items) {
+        if (tokens.length === 0) return items;
+        const forceAuthor = tokens.some(t => t.startsWith("@"));
+        const plain = tokens.map(t => t.replace(/^@+/, "")).filter(t => t.length > 0);
+        if (plain.length === 0) return items;
+        const scored = [];
+        items.forEach(entry => {
+            const nameKey = Wallpapers.normalizeText(entry.title + " " + entry.name.replace(/^[^\s]+?--/, "")).replace(/[_\-.]+/g, " ");
+            const authorKey = Wallpapers.normalizeText(entry.author ?? "").replace(/[_\-.]+/g, " ");
+            if (!forceAuthor) {
+                const nameScore = Wallpapers.scoreItem(nameKey, plain);
+                if (nameScore >= 0) {
+                    scored.push({ item: entry, score: 2000 + nameScore });
+                    return;
+                }
+            }
+            if (authorKey !== "") {
+                const authorScore = Wallpapers.scoreItem(authorKey, plain);
+                if (authorScore >= 0) {
+                    scored.push({ item: entry, score: authorScore });
+                    return;
+                }
+                if (!forceAuthor) {
+                    const mixedScore = Wallpapers.scoreItem(nameKey + " " + authorKey, plain);
+                    if (mixedScore >= 0) scored.push({ item: entry, score: 1000 + mixedScore });
+                }
+            }
+        });
+        scored.sort((a, b) => b.score - a.score);
+        return scored.map(e => e.item);
+    }
+
     readonly property var localEntries: {
         const model = currentModel;
         if (!model) return [];
@@ -49,7 +81,7 @@ Item {
         return rankBy(items, item => item.fileName.replace(".json", ""));
     }
 
-    readonly property var onlineEntries: rankBy(PresetsOnline.pending, entry => entry.title + " " + entry.name)
+    readonly property var onlineEntries: rankOnline(PresetsOnline.pending)
     readonly property int columns: Math.max(2, Math.round(width / 340))
 
     readonly property var barPositions: [Translation.tr("Top"), Translation.tr("Bottom"), Translation.tr("Left"), Translation.tr("Right")]
@@ -169,6 +201,7 @@ Item {
                     implicitHeight: 44
                     horizontalPadding: 18
                     buttonRadius: 22
+                    glass: true
                     toggled: active
                     colBackground: Appearance.colors.colLayer1
                     colBackgroundHover: Appearance.colors.colLayer1Hover
@@ -226,6 +259,7 @@ Item {
                 implicitWidth: 44
                 implicitHeight: 44
                 buttonRadius: 22
+                glass: true
                 colBackground: Appearance.colors.colSecondaryContainer
                 colBackgroundHover: Appearance.colors.colSecondaryContainerHover
                 downAction: () => Qt.callLater(() => PresetsOnline.refresh())
@@ -246,9 +280,15 @@ Item {
                 Layout.minimumWidth: 160
                 implicitHeight: 44
                 radius: 22
-                color: Appearance.colors.colLayer1
+                color: Config.options.background.widgets.glass.enable ? "transparent" : Appearance.colors.colLayer1
                 border.width: saveInput.activeFocus ? 2 : 0
-                border.color: Appearance.colors.colPrimary
+                border.color: Config.options.background.widgets.glass.enable ? "transparent" : Appearance.colors.colPrimary
+
+                WindowGlass {
+                    anchors.fill: parent
+                    glassEnabled: Config.options.background.widgets.glass.enable
+                    cardRadius: parent.radius
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -307,6 +347,7 @@ Item {
 
             RippleButton {
                 id: importButton
+                glass: true
                 visible: root.source !== "online"
                 implicitWidth: 44
                 implicitHeight: 44
@@ -331,7 +372,7 @@ Item {
             }
         }
 
-        GridView {
+        StyledGridView {
             id: grid
             visible: root.source !== "online"
             Layout.fillWidth: true
@@ -497,7 +538,7 @@ Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            GridView {
+            StyledGridView {
                 id: onlineGrid
                 anchors.fill: parent
                 visible: root.onlineEnabled
@@ -705,6 +746,7 @@ Item {
             preset: root.selected
             pager: root.pager
             staggerMs: root.staggerMs
+            summarize: root.summaryOf
             onBack: root.back()
             onApplyRequested: {
                 if (root.selected.source === "online") PresetsOnline.download(root.selected.entry);
