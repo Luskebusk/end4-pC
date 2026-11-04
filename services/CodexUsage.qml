@@ -10,6 +10,7 @@ Singleton {
     property bool available: false
     property real percentage: 0
     property int resetsAt: 0
+    property int reportedAt: 0
     property real weeklyPercentage: 0
     property int weeklyResetsAt: 0
 
@@ -36,6 +37,7 @@ Singleton {
                     root.available = data.available === true;
                     root.percentage = data.percentage ?? 0;
                     root.resetsAt = data.resetsAt ?? 0;
+                    root.reportedAt = data.reportedAt ?? 0;
                     root.weeklyPercentage = data.weeklyPercentage ?? 0;
                     root.weeklyResetsAt = data.weeklyResetsAt ?? 0;
                 } catch (e) { root.available = false; }

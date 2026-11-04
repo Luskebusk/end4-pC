@@ -10,6 +10,7 @@ Singleton {
     property var sessions: []
     property int tokens: 0
     property int resetsAt: 0
+    property int checkedAt: 0
     readonly property int tokenLimit: Config.options.bar.aiUsage.tokenLimit
     readonly property real percentage: root.tokenLimit > 0 ? Math.min(root.tokens / root.tokenLimit, 1) : 0
     readonly property int activeSessions: root.sessions.length
@@ -36,6 +37,7 @@ Singleton {
                     root.sessions = data.sessions;
                     root.tokens = data.tokens;
                     root.resetsAt = data.resetsAt;
+                    root.checkedAt = Math.floor(Date.now() / 1000);
                 } catch (e) {}
             }
         }

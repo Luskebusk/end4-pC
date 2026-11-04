@@ -8,6 +8,20 @@ StyledPopup {
     id: root
 
     property var providers: []
+    property int nowSeconds: Math.floor(Date.now() / 1000)
+
+    property Timer resetClock: Timer {
+        interval: 60000
+        repeat: true
+        running: true
+        onTriggered: root.nowSeconds = Math.floor(Date.now() / 1000)
+    }
+
+    function formatAge(timestamp) {
+        if (!timestamp) return Translation.tr("No recent reading");
+        const minutes = Math.max(0, Math.floor((root.nowSeconds - timestamp) / 60));
+        return minutes < 60 ? `${minutes}m ago` : `${Math.floor(minutes / 60)}h ${minutes % 60}m ago`;
+    }
 
     function formatTokens(count) {
         if (count >= 1000000) return `${(count / 1000000).toFixed(1)}M`;
@@ -17,7 +31,7 @@ StyledPopup {
 
     function formatReset(usage) {
         if (usage.resetsAt <= 0) return Translation.tr("No usage in this window");
-        const seconds = Math.max(0, usage.resetsAt - Date.now() / 1000);
+        const seconds = Math.max(0, usage.resetsAt - root.nowSeconds);
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         return Translation.tr("Resets in %1").arg(h > 0 ? `${h}h ${m}m` : `${m}m`);
@@ -72,6 +86,14 @@ StyledPopup {
                             color: Appearance.colors.colOnSurfaceVariant
                             opacity: 0.6
                             text: provider.modelData.codex && !provider.modelData.usage.available ? Translation.tr("No usage data yet") : root.formatReset(provider.modelData.usage)
+                        }
+                        StyledText {
+                            font.pixelSize: Appearance.font.pixelSize.smaller
+                            color: Appearance.colors.colOnSurfaceVariant
+                            opacity: 0.6
+                            text: provider.modelData.codex
+                                ? `Last reported ${root.formatAge(provider.modelData.usage.reportedAt)}`
+                                : `Last checked ${root.formatAge(provider.modelData.usage.checkedAt)}`
                         }
                     }
 

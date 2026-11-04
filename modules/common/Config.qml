@@ -563,7 +563,7 @@ Singleton {
                     property bool claudeEnabled: true
                     property bool codexEnabled: true
                     property int tokenLimit: 1000000
-                    property int updateInterval: 60
+                    property int updateInterval: 900
                 }
 
                 property JsonObject dynamicIsland: JsonObject {
