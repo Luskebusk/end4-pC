@@ -216,8 +216,11 @@ Variants {
                 id: previousWallpaper
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectCrop
-                // Same size as `wallpaper` so this synchronous Image reuses its cached pixmap
+                // Presets can replace large wallpapers. Do not decode the outgoing
+                // image on the UI thread when it is no longer in Qt's image cache.
                 sourceSize: bgRoot.wallpaperSourceSize
+                asynchronous: true
+                retainWhileLoading: true
                 cache: true
                 mipmap: true
                 smooth: true

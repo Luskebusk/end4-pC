@@ -17,6 +17,7 @@ AbstractBackgroundWidget {
     hoverEnabled: true
 
     property string imagePath: Config.options.background.widgets.customImage.path ?? ""
+    readonly property bool animatedGif: /\.gif$/i.test(imagePath)
     property bool dropHover: false
     property int shapeType: ShapeUtils.getShape(Config.options.background.widgets.customImage.shape ?? "Cookie4Sided")
     property real widgetSize: Config.options.background.widgets.customImage.size ?? 200
@@ -68,13 +69,26 @@ AbstractBackgroundWidget {
 
             StyledImage {
                 anchors.fill: parent
-                source: root.imagePath !== "" ? root.imagePath : ""
+                source: root.imagePath !== "" && !root.animatedGif ? root.imagePath : ""
                 fillMode: Image.PreserveAspectCrop
                 cache: false
                 antialiasing: true
                 sourceSize.width: parent.width
                 sourceSize.height: parent.height
-                visible: root.imagePath !== ""
+                visible: root.imagePath !== "" && !root.animatedGif
+            }
+
+            AnimatedImage {
+                anchors.fill: parent
+                source: root.animatedGif ? root.imagePath : ""
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+                cache: false
+                // Keep the GIF's native frame size. Qt scales it for display;
+                // resizing decoded animation frames during startup can recurse
+                // inside Qt's image loader.
+                visible: root.animatedGif
+                playing: root.visible && root.animatedGif
             }
 
             // Placeholder + hover hint

@@ -182,6 +182,11 @@ EOF
 set_wallpaper_path() {
     local path="$1"
     if [ -f "$SHELL_CONFIG_FILE" ]; then
+        # Preset application already writes this path. Replacing config.json again
+        # makes Quickshell rebuild every config-bound view a second time.
+        if [[ "$(jq -r '.background.wallpaperPath // ""' "$SHELL_CONFIG_FILE")" == "$path" ]]; then
+            return
+        fi
         config_json_update "$SHELL_CONFIG_FILE" --arg path "$path" '.background.wallpaperPath = $path'
     fi
 }
@@ -221,7 +226,7 @@ switch() {
 
     matugen_args=(--source-color-index 0)
 
-    if [[ "$color_flag" == "1" ]]; then
+    if [[ "$color_flag" == "1" && ( -z "$imgpath" || -n "$noswitch_flag" ) ]]; then
         matugen_args+=(color hex "$color")
         generate_colors_material_args=(--color "$color")
     else
@@ -302,6 +307,13 @@ switch() {
                 set_wallpaper_path "$imgpath"
                 remove_restore
             fi
+        fi
+        # A manually chosen accent stays in effect when the wallpaper changes.
+        # Keep the wallpaper update above, then generate the palette from that
+        # accent instead of the newly selected image.
+        if [[ "$color_flag" == "1" ]]; then
+            matugen_args=(--source-color-index 0 color hex "$color")
+            generate_colors_material_args=(--color "$color")
         fi
     fi
 
@@ -575,12 +587,6 @@ main() {
             cd "$(xdg-user-dir PICTURES)/Wallpapers/showcase" 2>/dev/null || cd "$(xdg-user-dir PICTURES)/Wallpapers" 2>/dev/null || cd "$(xdg-user-dir PICTURES)" || return 1
         fi
         imgpath="$(kdialog --getopenfilename . --title 'Choose wallpaper')"
-    fi
-
-    if [[ -n "$imgpath" && -z "$noswitch_flag" ]]; then
-        set_accent_color ""
-        color_flag=""
-        color=""
     fi
 
     if [[ "$type_flag" == "auto" ]]; then

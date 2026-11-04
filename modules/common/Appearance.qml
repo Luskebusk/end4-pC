@@ -6,7 +6,10 @@ pragma ComponentBehavior: Bound
 
 Singleton {
     id: root
-    property QtObject m3colors
+    // A preset updates many palette roles together. Animating every dependent
+    // color while widgets move can monopolize Quickshell's render thread.
+    property bool instantPaletteChange: false
+    property var m3colors
     property QtObject animation
     property QtObject animationCurves
     property QtObject colors
@@ -27,6 +30,8 @@ Singleton {
     property real wallpaperVibrancy: (wallColorQuant.colors[0]?.hslSaturation + wallColorQuant.colors[0]?.hslLightness) / 2
     property real autoBackgroundTransparency: { // y = 0.5768x^2 - 0.759x + 0.2896
         let x = wallpaperVibrancy
+        // A missing or loading wallpaper has no quantized color yet.
+        if (!Number.isFinite(x)) return 0.11
         let y = 0.5768 * (x * x) - 0.759 * (x) + 0.2896
         return Math.max(0, Math.min(0.22, y)) - 0.12 * (m3colors.darkmode ? 0 : 1)
     }
@@ -50,80 +55,79 @@ Singleton {
         }
     }
 
-    m3colors: QtObject {
-        property bool darkmode: true
-        property bool transparent: false
-        property color m3background: "#141313"
-        property color m3onBackground: "#e6e1e1"
-        property color m3surface: "#141313"
-        property color m3surfaceDim: "#141313"
-        property color m3surfaceBright: "#3a3939"
-        property color m3surfaceContainerLowest: "#0f0e0e"
-        property color m3surfaceContainerLow: "#1c1b1c"
-        property color m3surfaceContainer: "#201f20"
-        property color m3surfaceContainerHigh: "#2b2a2a"
-        property color m3surfaceContainerHighest: "#363435"
-        property color m3onSurface: "#e6e1e1"
-        property color m3surfaceVariant: "#49464a"
-        property color m3onSurfaceVariant: "#cbc5ca"
-        property color m3inverseSurface: "#e6e1e1"
-        property color m3inverseOnSurface: "#313030"
-        property color m3outline: "#948f94"
-        property color m3outlineVariant: "#49464a"
-        property color m3shadow: "#000000"
-        property color m3scrim: "#000000"
-        property color m3surfaceTint: "#cbc4cb"
-        property color m3primary: "#cbc4cb"
-        property color m3onPrimary: "#322f34"
-        property color m3primaryContainer: "#2d2a2f"
-        property color m3onPrimaryContainer: "#bcb6bc"
-        property color m3inversePrimary: "#615d63"
-        property color m3secondary: "#cac5c8"
-        property color m3onSecondary: "#323032"
-        property color m3secondaryContainer: "#4d4b4d"
-        property color m3onSecondaryContainer: "#ece6e9"
-        property color m3tertiary: "#d1c3c6"
-        property color m3onTertiary: "#372e30"
-        property color m3tertiaryContainer: "#31292b"
-        property color m3onTertiaryContainer: "#c1b4b7"
-        property color m3error: "#ffb4ab"
-        property color m3onError: "#690005"
-        property color m3errorContainer: "#93000a"
-        property color m3onErrorContainer: "#ffdad6"
-        property color m3primaryFixed: "#e7e0e7"
-        property color m3primaryFixedDim: "#cbc4cb"
-        property color m3onPrimaryFixed: "#1d1b1f"
-        property color m3onPrimaryFixedVariant: "#49454b"
-        property color m3secondaryFixed: "#e6e1e4"
-        property color m3secondaryFixedDim: "#cac5c8"
-        property color m3onSecondaryFixed: "#1d1b1d"
-        property color m3onSecondaryFixedVariant: "#484648"
-        property color m3tertiaryFixed: "#eddfe1"
-        property color m3tertiaryFixedDim: "#d1c3c6"
-        property color m3onTertiaryFixed: "#211a1c"
-        property color m3onTertiaryFixedVariant: "#4e4447"
-        property color m3success: "#B5CCBA"
-        property color m3onSuccess: "#213528"
-        property color m3successContainer: "#374B3E"
-        property color m3onSuccessContainer: "#D1E9D6"
-        property color term0: "#EDE4E4"
-        property color term1: "#B52755"
-        property color term2: "#A97363"
-        property color term3: "#AF535D"
-        property color term4: "#A67F7C"
-        property color term5: "#B2416B"
-        property color term6: "#8D76AD"
-        property color term7: "#272022"
-        property color term8: "#0E0D0D"
-        property color term9: "#B52755"
-        property color term10: "#A97363"
-        property color term11: "#AF535D"
-        property color term12: "#A67F7C"
-        property color term13: "#B2416B"
-        property color term14: "#8D76AD"
-        property color term15: "#221A1A"
-    }
-
+    m3colors: ({
+        darkmode: true,
+        transparent: false,
+        m3background: Qt.color("#141313"),
+        m3onBackground: Qt.color("#e6e1e1"),
+        m3surface: Qt.color("#141313"),
+        m3surfaceDim: Qt.color("#141313"),
+        m3surfaceBright: Qt.color("#3a3939"),
+        m3surfaceContainerLowest: Qt.color("#0f0e0e"),
+        m3surfaceContainerLow: Qt.color("#1c1b1c"),
+        m3surfaceContainer: Qt.color("#201f20"),
+        m3surfaceContainerHigh: Qt.color("#2b2a2a"),
+        m3surfaceContainerHighest: Qt.color("#363435"),
+        m3onSurface: Qt.color("#e6e1e1"),
+        m3surfaceVariant: Qt.color("#49464a"),
+        m3onSurfaceVariant: Qt.color("#cbc5ca"),
+        m3inverseSurface: Qt.color("#e6e1e1"),
+        m3inverseOnSurface: Qt.color("#313030"),
+        m3outline: Qt.color("#948f94"),
+        m3outlineVariant: Qt.color("#49464a"),
+        m3shadow: Qt.color("#000000"),
+        m3scrim: Qt.color("#000000"),
+        m3surfaceTint: Qt.color("#cbc4cb"),
+        m3primary: Qt.color("#cbc4cb"),
+        m3onPrimary: Qt.color("#322f34"),
+        m3primaryContainer: Qt.color("#2d2a2f"),
+        m3onPrimaryContainer: Qt.color("#bcb6bc"),
+        m3inversePrimary: Qt.color("#615d63"),
+        m3secondary: Qt.color("#cac5c8"),
+        m3onSecondary: Qt.color("#323032"),
+        m3secondaryContainer: Qt.color("#4d4b4d"),
+        m3onSecondaryContainer: Qt.color("#ece6e9"),
+        m3tertiary: Qt.color("#d1c3c6"),
+        m3onTertiary: Qt.color("#372e30"),
+        m3tertiaryContainer: Qt.color("#31292b"),
+        m3onTertiaryContainer: Qt.color("#c1b4b7"),
+        m3error: Qt.color("#ffb4ab"),
+        m3onError: Qt.color("#690005"),
+        m3errorContainer: Qt.color("#93000a"),
+        m3onErrorContainer: Qt.color("#ffdad6"),
+        m3primaryFixed: Qt.color("#e7e0e7"),
+        m3primaryFixedDim: Qt.color("#cbc4cb"),
+        m3onPrimaryFixed: Qt.color("#1d1b1f"),
+        m3onPrimaryFixedVariant: Qt.color("#49454b"),
+        m3secondaryFixed: Qt.color("#e6e1e4"),
+        m3secondaryFixedDim: Qt.color("#cac5c8"),
+        m3onSecondaryFixed: Qt.color("#1d1b1d"),
+        m3onSecondaryFixedVariant: Qt.color("#484648"),
+        m3tertiaryFixed: Qt.color("#eddfe1"),
+        m3tertiaryFixedDim: Qt.color("#d1c3c6"),
+        m3onTertiaryFixed: Qt.color("#211a1c"),
+        m3onTertiaryFixedVariant: Qt.color("#4e4447"),
+        m3success: Qt.color("#B5CCBA"),
+        m3onSuccess: Qt.color("#213528"),
+        m3successContainer: Qt.color("#374B3E"),
+        m3onSuccessContainer: Qt.color("#D1E9D6"),
+        term0: Qt.color("#EDE4E4"),
+        term1: Qt.color("#B52755"),
+        term2: Qt.color("#A97363"),
+        term3: Qt.color("#AF535D"),
+        term4: Qt.color("#A67F7C"),
+        term5: Qt.color("#B2416B"),
+        term6: Qt.color("#8D76AD"),
+        term7: Qt.color("#272022"),
+        term8: Qt.color("#0E0D0D"),
+        term9: Qt.color("#B52755"),
+        term10: Qt.color("#A97363"),
+        term11: Qt.color("#AF535D"),
+        term12: Qt.color("#A67F7C"),
+        term13: Qt.color("#B2416B"),
+        term14: Qt.color("#8D76AD"),
+        term15: Qt.color("#221A1A"),
+    })
     colors: QtObject {
         function softenForOled(color) {
             return Config?.options.appearance.uiBackground === "oled" ? ColorUtils.transparentize(ColorUtils.mix(color, "#000000", 0.85), 0.2) : color
@@ -354,7 +358,7 @@ Singleton {
             property list<real> bezierCurve: animationCurves.expressiveEffects
             property int velocity: 850
             property Component colorAnimation: Component { ColorAnimation {
-                duration: root.animation.elementMoveFast.duration
+                duration: root.instantPaletteChange ? 0 : root.animation.elementMoveFast.duration
                 easing.type: root.animation.elementMoveFast.type
                 easing.bezierCurve: root.animation.elementMoveFast.bezierCurve
             }}

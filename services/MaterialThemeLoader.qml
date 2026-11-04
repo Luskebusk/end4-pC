@@ -22,18 +22,31 @@ Singleton {
 
     function applyColors(fileContent) {
         const json = JSON.parse(fileContent)
+        // Replacing the palette once avoids recalculating the entire shell
+        // after every individual role in the generated theme.
+        const palette = Object.assign({}, Appearance.m3colors)
+        Appearance.instantPaletteChange = true
+        paletteAnimationReset.restart()
         for (const key in json) {
             if (json.hasOwnProperty(key)) {
                 // Convert snake_case to CamelCase
                 const camelCaseKey = key.replace(/_([a-z])/g, (g) => g[1].toUpperCase())
                 const m3Key = `m3${camelCaseKey}`
-                Appearance.m3colors[m3Key] = json[key]
+                palette[m3Key] = Qt.color(json[key])
             }
         }
-        Appearance.m3colors.darkmode = (Appearance.m3colors.m3background.hslLightness < 0.5)
+        palette.darkmode = (palette.m3background.hslLightness < 0.5)
+        Appearance.m3colors = palette
         // Custom window border colors are stored as palette roles, so they
         // have to be pushed to Hyprland again whenever the palette changes.
         HyprlandConfig.applyBorderColors()
+    }
+
+    Timer {
+        id: paletteAnimationReset
+        interval: 300
+        repeat: false
+        onTriggered: Appearance.instantPaletteChange = false
     }
 
     function resetFilePathNextTime() {

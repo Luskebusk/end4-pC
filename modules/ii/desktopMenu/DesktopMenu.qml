@@ -73,9 +73,29 @@ Scope {
 
     // Menu window
     Loader {
-        active: GlobalStates.desktopMenuOpen
+        // Keep the menu's object tree ready between openings. Recreating its
+        // carousel and submenus on every right-click stalls the UI thread.
+        active: true
+        asynchronous: true
         sourceComponent: PanelWindow {
             id: menuWindow
+
+            visible: GlobalStates.desktopMenuOpen
+            onVisibleChanged: {
+                if (!visible) {
+                    openSubmenuComponent = null
+                    if (submenuCloseTimer) submenuCloseTimer.stop()
+                    return
+                }
+                if (!menuCard) return
+                menuCard.scale = 0.85
+                menuCard.opacity = 0
+                Qt.callLater(() => {
+                    if (!menuWindow.visible) return
+                    menuCard.scale = 1.0
+                    menuCard.opacity = 1.0
+                })
+            }
 
             screen: GlobalStates.desktopMenuScreen ?? Quickshell.screens[0]
 
@@ -121,11 +141,6 @@ Scope {
                 scale: 0.85
                 opacity: 0
                 transformOrigin: Item.Center
-
-                Component.onCompleted: {
-                    scale = 1.0
-                    opacity = 1.0
-                }
 
                 Behavior on scale {
                     animation: Appearance.animation.elementMoveEnter.numberAnimation.createObject(this)
