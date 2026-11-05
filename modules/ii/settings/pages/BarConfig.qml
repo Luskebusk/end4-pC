@@ -40,6 +40,7 @@ ContentPage {
         { id: "launcherButton",     name: Translation.tr("Launcher Button"),     icon: "search" },
         { id: "dynamicIsland",     name: Translation.tr("Dynamic Island"),     icon: "nest_wifi_pro" },
         { id: "aiUsage",           name: Translation.tr("AI Usage"),           icon: "neurology" },
+        { id: "workspaceResolution", name: Translation.tr("Workspace Resolution"), icon: "monitor" },
         { id: "avatar",            name: Translation.tr("Avatar"),             icon: "account_circle" },
     ]
 
@@ -87,7 +88,8 @@ ContentPage {
         workspaces: Translation.tr("Workspaces"),
         resources: Translation.tr("Resources"),
         media: Translation.tr("Media"),
-        aiUsage: Translation.tr("AI Usage")
+        aiUsage: Translation.tr("AI Usage"),
+        workspaceResolution: Translation.tr("Workspace Resolution")
     })
 
     function openWidgetSettings(id) {

@@ -578,7 +578,7 @@ Singleton {
                 }
 
                 property JsonObject layouts: JsonObject {
-                    property list<string> leftLayout: ["launcherButton", "workspaces", "activeWindow"]
+                    property list<string> leftLayout: ["launcherButton", "workspaces", "activeWindow", "workspaceResolution"]
                     property list<string> middleLayout: ["clockWidget"]
                     property list<string> rightLayout: ["sysTray", "utilButtons", "systemIcons", "powerButton"]
                 }
